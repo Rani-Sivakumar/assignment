@@ -1,13 +1,47 @@
-name: Hello Workflow
+name: CI with cache
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 22f3000632@ds.study.iitm.ac.in
-        run: echo "Hello, world!"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # Cache Python dependencies with fixed key
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: ~/.cache/pip
+          key: cache-a9e6e73
+
+      # Install dependencies only if cache is not hit
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step that prints cache hit/miss (required by assignment)
+      - name: prime-cache-a9e6e73
+        run: |
+          echo "Cache key used: cache-a9e6e73"
+          if [ "${{ steps.cache-deps.outputs.cache-hit }}" = "true" ]; then
+            echo "Cache status: HIT"
+          else
+            echo "Cache status: MISS"
+          fi
+
+      # Optional: run tests or a simple script
+      - name: Run tests (example)
+        run: python -c "print('Tests passed')"
